@@ -14,11 +14,12 @@ async function check(
   expected: number,
   method: string,
   path: string,
-  body?: string
+  body?: string,
+  contentType = "application/json"
 ): Promise<ResponseBody> {
   const response = await fetch(`${API}${path}`, {
     method,
-    headers: body === undefined ? {} : { "Content-Type": "application/json" },
+    headers: body === undefined ? {} : { "Content-Type": contentType },
     body,
   })
   const text = await response.text()
@@ -66,6 +67,15 @@ await check(400, "POST", "/api/clients", json({ ...validClient, status: "VIP" })
 await check(400, "POST", "/api/clients", json({ ...validClient, value: -5 }))
 const badJson = await check(400, "POST", "/api/clients", "{bad")
 expect("invalid JSON message", badJson?.error === "Invalid JSON")
+// Body-parser client errors keep their 4xx status instead of becoming 500.
+await check(413, "POST", "/api/clients", json({ ...validClient, name: "x".repeat(200_000) }))
+await check(
+  415,
+  "POST",
+  "/api/clients",
+  json(validClient),
+  "application/json; charset=latin9"
+)
 
 const patched = await check(200, "PATCH", `/api/clients/${CID}`, json({ value: 20 }))
 expect("patched value is number 20", patched?.value === 20)

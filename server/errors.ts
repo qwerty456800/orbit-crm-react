@@ -37,6 +37,17 @@ export const errorHandler: ErrorRequestHandler = (error, _request, response, _ne
     response.status(400).json({ error: "Invalid input" })
     return
   }
+  // Other body-parser client errors (413 too large, 415 bad charset, ...)
+  // carry their own 4xx status and a safe-to-expose message.
+  const { status, expose, message } = (error ?? {}) as ErrorLike & {
+    status?: unknown
+    expose?: unknown
+    message?: unknown
+  }
+  if (typeof status === "number" && status >= 400 && status < 500 && expose === true) {
+    response.status(status).json({ error: typeof message === "string" ? message : "Bad request" })
+    return
+  }
   console.error(error)
   response.status(500).json({ error: "Internal server error" })
 }
