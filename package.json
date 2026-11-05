@@ -9,7 +9,10 @@
     "lint": "oxlint",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "server": "tsx watch server/index.ts",
+    "server:start": "tsx server/index.ts",
+    "db:migrate": "tsx server/scripts/migrate.ts"
   },
   "dependencies": {
     "cors": "^2.8.6",
