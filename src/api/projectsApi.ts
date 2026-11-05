@@ -1,4 +1,4 @@
-import { API_BASE_URL } from "./api";
+import { API_BASE_URL, readError } from "./api";
 import type { Project } from "../types/models";
 import { isProject } from "../utils/dataGuards";
 
@@ -12,7 +12,7 @@ export async function deleteProject(
         method: "DELETE"
     })
     if(!response.ok){
-        throw new Error("Failed to delete project")
+        throw await readError(response, "Failed to delete project")
     }
 }
 
@@ -28,7 +28,7 @@ export async function updateProject(
         body: JSON.stringify(updates)
     })
     if(!response.ok){
-        throw new Error("Failed to update projects")
+        throw await readError(response, "Failed to update projects")
     }
     const data: unknown = await response.json()
     if(!isProject(data)){
@@ -48,7 +48,7 @@ export async function createProject(
         body: JSON.stringify(input)
     })
     if(!response.ok){
-        throw new Error("Failed to create projects")
+        throw await readError(response, "Failed to create projects")
     }
     const data: unknown = await response.json()
     if(!isProject(data)){
@@ -60,7 +60,7 @@ export async function createProject(
 export async function getProjects(): Promise<Project[]> {
     const response = await fetch(`${API_BASE_URL}/api/projects`)
     if(!response.ok){
-        throw new Error("Failed to load projects")
+        throw await readError(response, "Failed to load projects")
     }
     const data: unknown = await response.json()
     if(!Array.isArray(data) || !data.every(isProject)){

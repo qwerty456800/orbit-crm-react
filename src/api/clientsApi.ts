@@ -1,4 +1,4 @@
-import { API_BASE_URL } from "./api"
+import { API_BASE_URL, readError } from "./api"
 import type { Client } from "../types/models"
 import { isClient } from "../utils/dataGuards"
 
@@ -10,7 +10,7 @@ export async function deleteClient(id: string): Promise<void>{
         method: "DELETE"
     })
     if(!response.ok){
-        throw new Error("Failed to delete client")
+        throw await readError(response, "Failed to delete client")
     }
 }
 
@@ -26,7 +26,7 @@ export async function updateClient(
         body: JSON.stringify(updates)
     })
     if(!response.ok){
-        throw new Error("Failed to update client")
+        throw await readError(response, "Failed to update client")
     }
     const data: unknown = await response.json()
     if(!isClient(data)){
@@ -44,7 +44,7 @@ export async function createClient(input: ClientInput): Promise<Client>{
         body: JSON.stringify(input)
     })
     if(!response.ok){
-        throw new Error("Failed to create client")
+        throw await readError(response, "Failed to create client")
     }
     const data: unknown = await response.json()
     if(!isClient(data)){
@@ -56,7 +56,7 @@ export async function createClient(input: ClientInput): Promise<Client>{
 export async function getClients(): Promise<Client[]> {
     const response = await fetch(`${API_BASE_URL}/api/clients`)
     if(!response.ok){
-        throw new Error("Failed to load clients")
+        throw await readError(response, "Failed to load clients")
     }
     const data: unknown = await response.json()
     if(!Array.isArray(data) || !data.every(isClient)){

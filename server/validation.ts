@@ -7,7 +7,8 @@ export type ProjectInput = Omit<Project, "id" | "progressBeforeCompleted"> & {
 }
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+// Matches what the browser accepts for <input type="email"> (domain dot not required).
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+$/
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/
 const CLIENT_STATUSES: readonly ClientStatus[] = ["Active", "Lead"]
 const PROJECT_STATUSES: readonly ProjectStatus[] = ["In progress", "In review", "Completed"]

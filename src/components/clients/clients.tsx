@@ -100,7 +100,12 @@ function Clients({
    
   const deletedClient = clients.find((client) => client.id === id)
 
-  await deleteClientRequest(id)
+  try {
+    await deleteClientRequest(id)
+  } catch (error) {
+    window.alert(error instanceof Error ? error.message : "Failed to delete client")
+    return
+  }
 
   deleteClient(id)
 

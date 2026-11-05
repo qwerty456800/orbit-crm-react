@@ -69,6 +69,9 @@ expect("invalid JSON message", badJson?.error === "Invalid JSON")
 
 const patched = await check(200, "PATCH", `/api/clients/${CID}`, json({ value: 20 }))
 expect("patched value is number 20", patched?.value === 20)
+// Browser <input type="email"> accepts addresses without a domain dot.
+await check(200, "PATCH", `/api/clients/${CID}`, json({ email: "asad@asd" }))
+await check(400, "PATCH", `/api/clients/${CID}`, json({ email: "two words@x.io" }))
 await check(400, "PATCH", `/api/clients/${CID}`, json({}))
 await check(400, "PATCH", `/api/clients/${CID}`, json({ foo: 1 }))
 await check(404, "PATCH", "/api/clients/not-a-uuid", json({ value: 1 }))
