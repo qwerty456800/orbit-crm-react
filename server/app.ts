@@ -1,6 +1,7 @@
 import cors from "cors"
 import express, { type Express } from "express"
 import { errorHandler, notFoundHandler } from "./errors"
+import { clientsRouter } from "./routes/clients"
 
 export function createApp(): Express {
   const app = express()
@@ -14,6 +15,8 @@ export function createApp(): Express {
   app.get("/", (_request, response) => {
     response.send("Orbit Api is running")
   })
+
+  app.use("/api/clients", clientsRouter)
 
   app.use(notFoundHandler)
   app.use(errorHandler)
