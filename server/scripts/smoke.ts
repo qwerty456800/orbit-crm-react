@@ -75,7 +75,60 @@ await check(404, "PATCH", "/api/clients/not-a-uuid", json({ value: 1 }))
 await check(404, "PATCH", `/api/clients/${MISSING_ID}`, json({ value: 1 }))
 await check(404, "GET", "/api/nope")
 
-// --- projects (Task 3) ---
+// --- projects ---
+const validProject = {
+  clientId: CID,
+  title: "Smoke project",
+  status: "In progress",
+  progress: 40,
+  deadline: "2026-11-15",
+}
+await check(200, "GET", "/api/projects")
+const project = await check(201, "POST", "/api/projects", json(validProject))
+const PID = String(project?.id ?? MISSING_ID)
+expect("deadline round-trips exactly", project?.deadline === "2026-11-15")
+expect("clientId round-trips", project?.clientId === CID)
+
+const noClient = await check(
+  400,
+  "POST",
+  "/api/projects",
+  json({ ...validProject, clientId: MISSING_ID })
+)
+expect("unknown client message", noClient?.error === "Client not found")
+await check(400, "POST", "/api/projects", json({ ...validProject, progress: 101 }))
+await check(400, "POST", "/api/projects", json({ ...validProject, progress: 1.5 }))
+await check(400, "POST", "/api/projects", json({ ...validProject, status: "Done" }))
+await check(400, "POST", "/api/projects", json({ ...validProject, deadline: "2026-13-40" }))
+await check(400, "POST", "/api/projects", json({ ...validProject, deadline: "2026-02-30" }))
+await check(400, "POST", "/api/projects", json({ ...validProject, title: "  " }))
+
+const completed = await check(
+  200,
+  "PATCH",
+  `/api/projects/${PID}`,
+  json({ status: "Completed", progress: 100, progressBeforeCompleted: 40 })
+)
+expect("progressBeforeCompleted stored", completed?.progressBeforeCompleted === 40)
+const restored = await check(
+  200,
+  "PATCH",
+  `/api/projects/${PID}`,
+  json({ status: "In progress", progress: 0, progressBeforeCompleted: null })
+)
+expect("progress 0 accepted", restored?.progress === 0)
+expect(
+  "progressBeforeCompleted cleared",
+  restored !== null && !("progressBeforeCompleted" in restored)
+)
+await check(400, "PATCH", `/api/projects/${PID}`, json({ status: "anything" }))
+await check(400, "PATCH", `/api/projects/${PID}`, json({}))
+await check(404, "PATCH", `/api/projects/${MISSING_ID}`, json({ progress: 5 }))
+
+const blocked = await check(409, "DELETE", `/api/clients/${CID}`)
+expect("client has projects message", blocked?.error === "Client has projects")
+await check(204, "DELETE", `/api/projects/${PID}`)
+await check(404, "DELETE", `/api/projects/${PID}`)
 
 // --- cleanup ---
 await check(204, "DELETE", `/api/clients/${CID}`)
