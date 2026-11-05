@@ -9,6 +9,7 @@ import type { ClientForm } from "./ClientsModal"
 import { createClient } from "../../api/clientsApi"
 import { updateClient as updateClientRequest } from "../../api/clientsApi"
 import { deleteClient as deleteClientRequest } from "../../api/clientsApi"
+import { showApiError } from "../../utils/showApiError"
 
 type ClientProps = {
   clients: Client[]
@@ -103,7 +104,7 @@ function Clients({
   try {
     await deleteClientRequest(id)
   } catch (error) {
-    window.alert(error instanceof Error ? error.message : "Failed to delete client")
+    showApiError(error, "Failed to delete client")
     return
   }
 
@@ -122,9 +123,13 @@ function Clients({
 
   const nextStatus = selectedClient.status === "Active" ? "Lead" : "Active"
 
-  const updatedClient = await updateClientRequest(id, {
-    status: nextStatus,
-  })
+  let updatedClient: Client
+  try {
+    updatedClient = await updateClientRequest(id, { status: nextStatus })
+  } catch (error) {
+    showApiError(error, "Failed to update client")
+    return
+  }
 
   updateClient(updatedClient.id, updatedClient)
 
@@ -144,10 +149,13 @@ function Clients({
       value: Number(form.value),
     }
     if (editingClientId !== null) {
-  const updatedClient = await updateClientRequest(
-    editingClientId,
-    clientData
-  )
+  let updatedClient: Client
+  try {
+    updatedClient = await updateClientRequest(editingClientId, clientData)
+  } catch (error) {
+    showApiError(error, "Failed to update client")
+    return
+  }
 
   updateClient(updatedClient.id, updatedClient)
 
@@ -157,7 +165,13 @@ function Clients({
     `${updatedClient.name} · ${updatedClient.company}`
   )
 } else {
-        const createdClient = await createClient(clientData)
+        let createdClient: Client
+        try {
+          createdClient = await createClient(clientData)
+        } catch (error) {
+          showApiError(error, "Failed to create client")
+          return
+        }
 
          addClient(createdClient)
 

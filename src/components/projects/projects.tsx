@@ -11,6 +11,7 @@ import type { ProjectForm } from "./ProjectModal"
 import { createProject } from "../../api/projectsApi"
 import { updateProject as updateProjectRequest } from "../../api/projectsApi"
 import { deleteProject as deleteProjectRequest } from "../../api/projectsApi"
+import { showApiError } from "../../utils/showApiError"
 
 type ProjectProps = {
   projects: Project[]
@@ -124,7 +125,13 @@ function Projects({
     deadline: form.deadline,
   }
 
-  const createdProject = await createProject(newProject)
+  let createdProject: Project
+  try {
+    createdProject = await createProject(newProject)
+  } catch (error) {
+    showApiError(error, "Failed to create project")
+    return
+  }
 
   addProject(createdProject)
 
@@ -142,7 +149,12 @@ function Projects({
   async function handleDelete(id: string) {
   const deletedProject = projects.find((project) => project.id === id)
 
-  await deleteProjectRequest(id)
+  try {
+    await deleteProjectRequest(id)
+  } catch (error) {
+    showApiError(error, "Failed to delete project")
+    return
+  }
 
   deleteProject(id)
 
@@ -180,7 +192,13 @@ function Projects({
         : selectedProject.progressBeforeCompleted,
   }
 
-  const updatedProject = await updateProjectRequest(id, updates)
+  let updatedProject: Project
+  try {
+    updatedProject = await updateProjectRequest(id, updates)
+  } catch (error) {
+    showApiError(error, "Failed to update project")
+    return
+  }
 
   updateProject(id, () => ({
     status: updatedProject.status,
@@ -213,7 +231,13 @@ function Projects({
     status: nextStatus
   }
 
-  const updatedProject = await updateProjectRequest(id, updates)
+  let updatedProject: Project
+  try {
+    updatedProject = await updateProjectRequest(id, updates)
+  } catch (error) {
+    showApiError(error, "Failed to update project")
+    return
+  }
 
   updateProject(id, () => ({
     progress: updatedProject.progress,
