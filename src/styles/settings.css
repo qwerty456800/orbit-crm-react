@@ -1,0 +1,145 @@
+.empty-inline {
+  color: #898890;
+  font-size: 11px;
+}
+.settings-form {
+  max-width: 850px;
+}
+.settings-card {
+  display: grid;
+  gap: 17px;
+  padding: 24px;
+  border: 1px solid #e5e4e7;
+  border-radius: 14px;
+  margin-bottom: 16px;
+  background: #fff;
+}
+.settings-head {
+  padding-bottom: 16px;
+  border-bottom: 1px solid #eeedeb;
+}
+.settings-head h2 {
+  margin: 0 0 6px;
+  color: #25252a;
+  font-size: 16px;
+}
+.settings-head p {
+  margin: 0;
+  color: #98979e;
+  font-size: 10px;
+}
+.settings-card > label:not(.toggle-row) {
+  display: grid;
+  gap: 7px;
+  color: #56555c;
+  font-size: 11px;
+  font-weight: 600;
+}
+.settings-card input:not([type="checkbox"]),
+.settings-card select {
+  width: 100%;
+  padding: 11px 12px;
+  border: 1px solid #d9dee8;
+  border-radius: 8px;
+  background: #fff;
+  font: inherit;
+}
+.toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  cursor: pointer;
+}
+.toggle-row span {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.toggle-row strong {
+  color: #39383e;
+  font-size: 11px;
+}
+.toggle-row small {
+  color: #99989f;
+  font-size: 9px;
+}
+.toggle-row input {
+  width: 18px;
+  height: 18px;
+  accent-color: #7150d4;
+}
+.settings-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+.save-settings {
+  padding: 11px 18px;
+  border: 0;
+  border-radius: 8px;
+  background: #4f46e5;
+  color: #fff;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.save-settings:hover {
+  background: #4338ca;
+}
+.saved-indicator {
+  opacity: 0;
+  padding: 7px 10px;
+  border-radius: 999px;
+  background: #eaf7f2;
+  color: #278064;
+  font-size: 10px;
+  transition: opacity 0.2s;
+}
+.saved-indicator.show {
+  opacity: 1;
+}
+.empty-state {
+  margin: 0;
+  padding: 42px 20px;
+  border: 1px dashed #d9dee8;
+  border-radius: 12px;
+  background: #fff;
+  color: #777780;
+  text-align: center;
+}
+.change-project-status {
+  margin-left: 8px;
+  padding: 7px 10px;
+  border: 0;
+  border-radius: 6px;
+  background: #4f46e5;
+  color: #fff;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+.change-project-status:hover {
+  background: #4338ca;
+}
+
+@media (max-width: 1000px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .reports-grid {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 520px) {
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+  .page-heading {
+    flex-direction: column;
+  }
+  .change-project-status {
+    margin: 8px 0 0;
+  }
+}
+
+/* Clients */
