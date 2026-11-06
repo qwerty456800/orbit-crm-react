@@ -56,19 +56,43 @@ The API lives in `server/`:
 | `index.ts` | Entry point: checks the DB connection, starts listening on `PORT` (default 3000) |
 | `app.ts` | Express app: middleware, routers, 404 and error handlers |
 | `routes/clients.ts`, `routes/projects.ts` | CRUD endpoints under `/api/clients` and `/api/projects` |
+| `demo.ts`, `demoData.ts` | Per-visitor demo sandboxes, starter data, `POST /api/demo/reset` |
 | `validation.ts` | Request body validation |
 | `schema.sql` | Idempotent database schema, applied by `npm run db:migrate` |
 
-Configuration comes from `.env`: `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `PORT`.
+Configuration comes from `.env` (see `.env.example`): `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `PORT` locally, or `DATABASE_URL` for a hosted database; plus `CORS_ORIGIN` and `DEMO_SESSION_TTL_HOURS`.
+
+### Demo sandboxes
+
+Every visitor works in an own sandbox, so the public demo can't be emptied by someone else:
+
+- The browser generates a random session id once (`localStorage`) and sends it as the `X-Demo-Session` header with every API request.
+- On the first request of a new session the server creates it and inserts starter clients and projects in the same transaction.
+- Every query is filtered by `session_id`; a project can only reference a client from the same session.
+- Sessions unused for `DEMO_SESSION_TTL_HOURS` (default 24) are deleted together with their data (`ON DELETE CASCADE`).
+- Settings → *Reset demo data* restores the starter data. Each sandbox is capped at 100 clients and 200 projects.
+
+Rows created before sandboxes existed have no `session_id` and are not shown in the app.
 
 Errors are returned as JSON `{ "error": "message" }`:
 
 - `400` invalid input (for example `email is invalid`, `Client not found` for an unknown `clientId`)
 - `404` unknown record or route
-- `409` deleting a client that still has projects (`Client has projects`)
+- `400` missing or invalid `X-Demo-Session` header
+- `409` deleting a client that still has projects (`Client has projects`), or a sandbox limit reached (`Demo limit reached`)
 - `500` unexpected server or database error (details are logged on the server only)
 
-With the API running, `npx tsx server/scripts/smoke.ts` checks every endpoint and error code; it cleans up the records it creates.
+With the API running, `npx tsx server/scripts/smoke.ts` checks every endpoint and error code, sandbox isolation and reset; it works in its own fresh sandboxes.
+
+## Deployment
+
+| Part | Service | Settings |
+| --- | --- | --- |
+| Database | [Neon](https://neon.tech) (free Postgres) | copy the connection string |
+| API | [Render](https://render.com) web service (`render.yaml`) | `DATABASE_URL`, `CORS_ORIGIN` = the Vercel URL |
+| Frontend | [Vercel](https://vercel.com) (`vercel.json` serves `index.html` for every route) | `VITE_API_URL` = the Render URL |
+
+The free Render plan sleeps after 15 minutes without traffic; the first request afterwards takes up to a minute.
 
 ## Quality checks
 

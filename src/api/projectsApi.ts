@@ -1,4 +1,4 @@
-import { API_BASE_URL, readError } from "./api";
+import { apiFetch, readError } from "./api";
 import type { Project } from "../types/models";
 import { isProject } from "../utils/dataGuards";
 
@@ -8,7 +8,7 @@ type ProjectUpdates = Partial<Omit<Project , "id">>
 export async function deleteProject(
     id: string
 ): Promise<void> {
-    const response = await fetch(`${API_BASE_URL}/api/projects/${id}` , {
+    const response = await apiFetch(`/api/projects/${id}` , {
         method: "DELETE"
     })
     if(!response.ok){
@@ -20,7 +20,7 @@ export async function updateProject(
     id: string,
     updates: ProjectUpdates
 ): Promise<Project> {
-    const response = await fetch(`${API_BASE_URL}/api/projects/${id}` , {
+    const response = await apiFetch(`/api/projects/${id}` , {
         method: "PATCH" ,
         headers: {
             "Content-type":"application/json"
@@ -40,7 +40,7 @@ export async function updateProject(
 export async function createProject(
     input: ProjectInput
 ): Promise<Project> {
-    const response = await fetch(`${API_BASE_URL}/api/projects` , {
+    const response = await apiFetch(`/api/projects` , {
         method: "POST" ,
         headers: {
             "Content-type":"application/json"
@@ -58,7 +58,7 @@ export async function createProject(
 }
 
 export async function getProjects(): Promise<Project[]> {
-    const response = await fetch(`${API_BASE_URL}/api/projects`)
+    const response = await apiFetch(`/api/projects`)
     if(!response.ok){
         throw await readError(response, "Failed to load projects")
     }
