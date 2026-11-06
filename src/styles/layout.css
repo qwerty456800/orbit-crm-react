@@ -193,3 +193,55 @@
     padding: 20px 16px;
   }
 }
+
+/* Same background as the pages, so the banner sits on the page, not on a white strip */
+.wake-banner-wrap {
+  padding: 20px 36px 0;
+  background: #f5f5f3;
+}
+.wake-banner {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px;
+  border: 1px solid #dcd6fb;
+  border-radius: 12px;
+  background: #f4f1ff;
+}
+.wake-banner div {
+  display: grid;
+  gap: 4px;
+}
+.wake-banner strong {
+  color: #3f3a8c;
+  font-size: 12px;
+}
+.wake-banner small {
+  color: #6b6790;
+  font-size: 11px;
+  line-height: 1.5;
+}
+.wake-spinner {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  border: 2px solid #cfc7fa;
+  border-top-color: #4f46e5;
+  border-radius: 50%;
+  animation: wake-spin 0.9s linear infinite;
+}
+@keyframes wake-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .wake-spinner {
+    animation: none;
+  }
+}
+@media (max-width: 700px) {
+  .wake-banner-wrap {
+    padding: 16px 16px 0;
+  }
+}
