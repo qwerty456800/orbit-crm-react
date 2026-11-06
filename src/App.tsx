@@ -8,6 +8,7 @@ import Sidebar from "./components/sidebar"
 import Topbar from "./components/topbar"
 import Dashboard from "./components/dashboard"
 import Clients from "./components/clients/clients"
+import WakeBanner from "./components/wakeBanner"
 import { normalizeDeadline } from "./components/projects/dateUtils"
 import { SettingsProvider } from "./context/SettingsContext"
 import "./App.css"
@@ -124,6 +125,7 @@ function App() {
         <Sidebar clientCount={clients.length} projectCount={projects.length} />
         <div className="main-wrap">
           <Topbar />
+          <WakeBanner isLoading={isClientsLoading || isProjectsLoading} />
           <Routes>
             <Route
               path="/"
