@@ -28,10 +28,10 @@ function WakeBanner({ isLoading }: WakeBannerProps) {
       <div className="wake-banner" role="status" aria-live="polite">
         <span className="wake-spinner" aria-hidden="true" />
         <div>
-          <strong>Waking up the demo server…</strong>
+          <strong>Server is waking up…</strong>
           <small>
-            It sleeps when nobody uses it (free hosting). The first load can
-            take up to a minute — your demo data will appear automatically.
+            This can take up to a minute. Please wait — your demo data will load
+            automatically.
           </small>
         </div>
       </div>
