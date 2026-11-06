@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react"
 import { useSettings } from "../context/SettingsContext"
+import { resetDemoData } from "../api/demoApi"
 import type { FormEvent } from "react"
 import type { ChangeEvent } from "react"
 
@@ -7,6 +8,8 @@ function Settings() {
   const { settings, updateSettings } = useSettings()
   const [draft, setDraft] = useState(settings)
   const [saved, setSaved] = useState(false)
+  const [isResetting, setIsResetting] = useState(false)
+  const [resetError, setResetError] = useState<string | null>(null)
 
   useEffect(() => {
     if (!saved) return
@@ -40,6 +43,23 @@ function Settings() {
     updateSettings(draft)
     localStorage.setItem("orbitSettings", JSON.stringify(draft))
     setSaved(true)
+  }
+
+  async function handleReset() {
+    if (!window.confirm("Reset all clients and projects to the demo data?"))
+      return
+    setIsResetting(true)
+    setResetError(null)
+    try {
+      await resetDemoData()
+      localStorage.removeItem("orbitActivity")
+      window.location.reload()
+    } catch (error) {
+      setResetError(
+        error instanceof Error ? error.message : "Failed to reset demo data"
+      )
+      setIsResetting(false)
+    }
   }
 
   return (
@@ -140,6 +160,33 @@ function Settings() {
           </button>
         </div>
       </form>
+      <section className="settings-card demo-card">
+        <div className="settings-head">
+          <h2>Demo data</h2>
+          <p>
+            This is a personal sandbox — your changes are visible only to you.
+          </p>
+        </div>
+        <div className="demo-reset-row">
+          <span>
+            <strong>Reset demo data</strong>
+            <small>Restore the starter clients and projects</small>
+          </span>
+          <button
+            type="button"
+            className="secondary-button"
+            onClick={handleReset}
+            disabled={isResetting}
+          >
+            {isResetting ? "Resetting…" : "Reset"}
+          </button>
+        </div>
+        {resetError && (
+          <p className="demo-reset-error" role="alert">
+            {resetError}
+          </p>
+        )}
+      </section>
     </main>
   )
 }

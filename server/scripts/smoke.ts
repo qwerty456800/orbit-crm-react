@@ -1,11 +1,14 @@
 // Smoke check of the Orbit API against a running server.
 // Usage: npm run server:start  (in another terminal), then: npx tsx server/scripts/smoke.ts
-// Creates its own records and deletes them at the end.
+// Works in its own fresh demo sandboxes, so it never touches a visitor's data.
 
-export {}
+import { randomUUID } from "node:crypto"
 
 const API = process.env.API ?? "http://localhost:3000"
 const MISSING_ID = "00000000-0000-0000-0000-000000000000"
+// Two independent visitors, to prove their sandboxes are isolated.
+const SESSION = randomUUID()
+const OTHER_SESSION = randomUUID()
 let failures = 0
 
 type ResponseBody = Record<string, unknown> | null
@@ -15,13 +18,13 @@ async function check(
   method: string,
   path: string,
   body?: string,
-  contentType = "application/json"
+  contentType = "application/json",
+  session: string | null = SESSION
 ): Promise<ResponseBody> {
-  const response = await fetch(`${API}${path}`, {
-    method,
-    headers: body === undefined ? {} : { "Content-Type": contentType },
-    body,
-  })
+  const headers: Record<string, string> = {}
+  if (body !== undefined) headers["Content-Type"] = contentType
+  if (session !== null) headers["X-Demo-Session"] = session
+  const response = await fetch(`${API}${path}`, { method, headers, body })
   const text = await response.text()
   let parsed: ResponseBody = null
   try {
@@ -33,7 +36,9 @@ async function check(
     console.log(`PASS ${expected} ${method} ${path}`)
   } else {
     failures++
-    console.log(`FAIL ${response.status} (want ${expected}) ${method} ${path} ${text.slice(0, 120)}`)
+    console.log(
+      `FAIL ${response.status} (want ${expected}) ${method} ${path} ${text.slice(0, 120)}`
+    )
   }
   return parsed
 }
@@ -56,6 +61,26 @@ const validClient = {
   value: 10,
 }
 
+// --- demo sandbox ---
+await check(400, "GET", "/api/clients", undefined, undefined, null)
+await check(400, "GET", "/api/clients", undefined, undefined, "not-a-uuid")
+
+// A brand-new session gets the starter data; two parallel first requests are safe.
+const [seededClients, seededProjects] = await Promise.all([
+  fetch(`${API}/api/clients`, { headers: { "X-Demo-Session": SESSION } }).then(
+    (r) => r.json()
+  ),
+  fetch(`${API}/api/projects`, { headers: { "X-Demo-Session": SESSION } }).then(
+    (r) => r.json()
+  ),
+])
+const starterClients = Array.isArray(seededClients) ? seededClients.length : 0
+const starterProjects = Array.isArray(seededProjects)
+  ? seededProjects.length
+  : 0
+expect("new sandbox has starter clients", starterClients > 0)
+expect("new sandbox has starter projects", starterProjects > 0)
+
 // --- clients ---
 await check(200, "GET", "/api/clients")
 const created = await check(201, "POST", "/api/clients", json(validClient))
@@ -63,12 +88,22 @@ const CID = String(created?.id ?? MISSING_ID)
 
 await check(400, "POST", "/api/clients", json({ ...validClient, name: "" }))
 await check(400, "POST", "/api/clients", json({ ...validClient, email: "bad" }))
-await check(400, "POST", "/api/clients", json({ ...validClient, status: "VIP" }))
+await check(
+  400,
+  "POST",
+  "/api/clients",
+  json({ ...validClient, status: "VIP" })
+)
 await check(400, "POST", "/api/clients", json({ ...validClient, value: -5 }))
 const badJson = await check(400, "POST", "/api/clients", "{bad")
 expect("invalid JSON message", badJson?.error === "Invalid JSON")
 // Body-parser client errors keep their 4xx status instead of becoming 500.
-await check(413, "POST", "/api/clients", json({ ...validClient, name: "x".repeat(200_000) }))
+await check(
+  413,
+  "POST",
+  "/api/clients",
+  json({ ...validClient, name: "x".repeat(200_000) })
+)
 await check(
   415,
   "POST",
@@ -77,11 +112,21 @@ await check(
   "application/json; charset=latin9"
 )
 
-const patched = await check(200, "PATCH", `/api/clients/${CID}`, json({ value: 20 }))
+const patched = await check(
+  200,
+  "PATCH",
+  `/api/clients/${CID}`,
+  json({ value: 20 })
+)
 expect("patched value is number 20", patched?.value === 20)
 // Browser <input type="email"> accepts addresses without a domain dot.
 await check(200, "PATCH", `/api/clients/${CID}`, json({ email: "asad@asd" }))
-await check(400, "PATCH", `/api/clients/${CID}`, json({ email: "two words@x.io" }))
+await check(
+  400,
+  "PATCH",
+  `/api/clients/${CID}`,
+  json({ email: "two words@x.io" })
+)
 await check(400, "PATCH", `/api/clients/${CID}`, json({}))
 await check(400, "PATCH", `/api/clients/${CID}`, json({ foo: 1 }))
 await check(404, "PATCH", "/api/clients/not-a-uuid", json({ value: 1 }))
@@ -109,12 +154,42 @@ const noClient = await check(
   json({ ...validProject, clientId: MISSING_ID })
 )
 expect("unknown client message", noClient?.error === "Client not found")
-await check(400, "POST", "/api/projects", json({ ...validProject, progress: 101 }))
-await check(400, "POST", "/api/projects", json({ ...validProject, progress: 1.5 }))
-await check(400, "POST", "/api/projects", json({ ...validProject, status: "Done" }))
-await check(400, "POST", "/api/projects", json({ ...validProject, deadline: "2026-13-40" }))
-await check(400, "POST", "/api/projects", json({ ...validProject, deadline: "2026-02-30" }))
-await check(400, "POST", "/api/projects", json({ ...validProject, title: "  " }))
+await check(
+  400,
+  "POST",
+  "/api/projects",
+  json({ ...validProject, progress: 101 })
+)
+await check(
+  400,
+  "POST",
+  "/api/projects",
+  json({ ...validProject, progress: 1.5 })
+)
+await check(
+  400,
+  "POST",
+  "/api/projects",
+  json({ ...validProject, status: "Done" })
+)
+await check(
+  400,
+  "POST",
+  "/api/projects",
+  json({ ...validProject, deadline: "2026-13-40" })
+)
+await check(
+  400,
+  "POST",
+  "/api/projects",
+  json({ ...validProject, deadline: "2026-02-30" })
+)
+await check(
+  400,
+  "POST",
+  "/api/projects",
+  json({ ...validProject, title: "  " })
+)
 
 const completed = await check(
   200,
@@ -122,7 +197,10 @@ const completed = await check(
   `/api/projects/${PID}`,
   json({ status: "Completed", progress: 100, progressBeforeCompleted: 40 })
 )
-expect("progressBeforeCompleted stored", completed?.progressBeforeCompleted === 40)
+expect(
+  "progressBeforeCompleted stored",
+  completed?.progressBeforeCompleted === 40
+)
 const restored = await check(
   200,
   "PATCH",
@@ -143,9 +221,78 @@ expect("client has projects message", blocked?.error === "Client has projects")
 await check(204, "DELETE", `/api/projects/${PID}`)
 await check(404, "DELETE", `/api/projects/${PID}`)
 
+// --- isolation between visitors ---
+const foreignClient =
+  (await check(
+    201,
+    "POST",
+    "/api/clients",
+    json(validClient),
+    undefined,
+    OTHER_SESSION
+  )) ?? {}
+const FOREIGN_ID = String(foreignClient.id ?? MISSING_ID)
+const ownList = await fetch(`${API}/api/clients`, {
+  headers: { "X-Demo-Session": SESSION },
+}).then((r) => r.json())
+expect(
+  "other visitor's client is invisible",
+  Array.isArray(ownList) &&
+    !ownList.some((c: { id?: unknown }) => c.id === FOREIGN_ID)
+)
+await check(404, "PATCH", `/api/clients/${FOREIGN_ID}`, json({ value: 1 }))
+await check(404, "DELETE", `/api/clients/${FOREIGN_ID}`)
+await check(
+  400,
+  "POST",
+  "/api/projects",
+  json({ ...validProject, clientId: FOREIGN_ID })
+)
+await check(
+  204,
+  "DELETE",
+  `/api/clients/${FOREIGN_ID}`,
+  undefined,
+  undefined,
+  OTHER_SESSION
+)
+
 // --- cleanup ---
 await check(204, "DELETE", `/api/clients/${CID}`)
 await check(404, "DELETE", `/api/clients/${CID}`)
 
-console.log(failures === 0 ? "\nSMOKE OK" : `\nSMOKE FAILED: ${failures} failure(s)`)
+// --- reset restores the starter data ---
+const firstStarter = Array.isArray(seededClients)
+  ? (seededClients[0] as { id?: unknown })
+  : {}
+await check(
+  204,
+  "DELETE",
+  `/api/projects/${String((seededProjects as { id?: unknown }[])[0]?.id)}`
+)
+await check(204, "POST", "/api/demo/reset")
+const afterReset = await fetch(`${API}/api/clients`, {
+  headers: { "X-Demo-Session": SESSION },
+}).then((r) => r.json())
+const projectsAfterReset = await fetch(`${API}/api/projects`, {
+  headers: { "X-Demo-Session": SESSION },
+}).then((r) => r.json())
+expect(
+  "reset restores starter clients",
+  Array.isArray(afterReset) && afterReset.length === starterClients
+)
+expect(
+  "reset restores starter projects",
+  Array.isArray(projectsAfterReset) &&
+    projectsAfterReset.length === starterProjects
+)
+expect(
+  "reset creates fresh ids",
+  Array.isArray(afterReset) &&
+    !afterReset.some((c: { id?: unknown }) => c.id === firstStarter.id)
+)
+
+console.log(
+  failures === 0 ? "\nSMOKE OK" : `\nSMOKE FAILED: ${failures} failure(s)`
+)
 process.exitCode = failures === 0 ? 0 : 1

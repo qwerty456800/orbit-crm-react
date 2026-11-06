@@ -29,3 +29,21 @@ ALTER TABLE projects ADD CONSTRAINT projects_progress_before_completed_check
   CHECK (progress_before_completed BETWEEN 0 AND 100);
 
 CREATE INDEX IF NOT EXISTS projects_client_id_idx ON projects(client_id);
+
+-- Demo sandboxes: every visitor gets an own copy of the demo data.
+-- Rows belong to a session; deleting the session deletes its clients and projects.
+CREATE TABLE IF NOT EXISTS demo_sessions (
+  id         UUID PRIMARY KEY,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  last_seen  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS demo_sessions_last_seen_idx ON demo_sessions(last_seen);
+
+ALTER TABLE clients ADD COLUMN IF NOT EXISTS session_id UUID
+  REFERENCES demo_sessions(id) ON DELETE CASCADE;
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS session_id UUID
+  REFERENCES demo_sessions(id) ON DELETE CASCADE;
+
+CREATE INDEX IF NOT EXISTS clients_session_id_idx ON clients(session_id);
+CREATE INDEX IF NOT EXISTS projects_session_id_idx ON projects(session_id);

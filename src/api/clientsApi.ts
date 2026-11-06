@@ -1,4 +1,4 @@
-import { API_BASE_URL, readError } from "./api"
+import { apiFetch, readError } from "./api"
 import type { Client } from "../types/models"
 import { isClient } from "../utils/dataGuards"
 
@@ -6,7 +6,7 @@ type ClientInput = Omit<Client, "id">
 type ClientUpdates = Partial<Omit<Client , "id">>
 
 export async function deleteClient(id: string): Promise<void>{
-    const response = await fetch(`${API_BASE_URL}/api/clients/${id}` , {
+    const response = await apiFetch(`/api/clients/${id}` , {
         method: "DELETE"
     })
     if(!response.ok){
@@ -18,7 +18,7 @@ export async function updateClient(
     id: string ,
     updates: ClientUpdates
 ): Promise<Client>{
-    const response = await fetch(`${API_BASE_URL}/api/clients/${id}` , {
+    const response = await apiFetch(`/api/clients/${id}` , {
         method: "PATCH" ,
         headers:{
             "Content-type":"application/json"
@@ -36,7 +36,7 @@ export async function updateClient(
 }
 
 export async function createClient(input: ClientInput): Promise<Client>{
-    const response = await fetch(`${API_BASE_URL}/api/clients`,{
+    const response = await apiFetch(`/api/clients`,{
         method: "POST" ,
         headers:{
             "Content-type":"application/json"
@@ -54,7 +54,7 @@ export async function createClient(input: ClientInput): Promise<Client>{
 }
 
 export async function getClients(): Promise<Client[]> {
-    const response = await fetch(`${API_BASE_URL}/api/clients`)
+    const response = await apiFetch(`/api/clients`)
     if(!response.ok){
         throw await readError(response, "Failed to load clients")
     }

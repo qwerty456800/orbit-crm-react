@@ -143,3 +143,35 @@
 }
 
 /* Clients */
+.demo-card {
+  max-width: 850px;
+  margin-top: 16px;
+  box-sizing: border-box;
+}
+.demo-reset-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.demo-reset-row span {
+  display: grid;
+  gap: 4px;
+}
+.demo-reset-row strong {
+  color: #39383e;
+  font-size: 11px;
+}
+.demo-reset-row small {
+  color: #99989f;
+  font-size: 9px;
+}
+.demo-reset-row button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+.demo-reset-error {
+  margin: 0;
+  color: #c2410c;
+  font-size: 10px;
+}
